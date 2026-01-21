@@ -1,5 +1,6 @@
 ---
 import HeaderLink from './HeaderLink.astro';
+import Search from './Search';
 import { SITE_TITLE } from '../consts';
 ---
 
@@ -8,10 +9,11 @@ import { SITE_TITLE } from '../consts';
 		<h2 class="text-lg font-semibold tracking-tight text-gray-900">
 			<a href="/" class="transition-opacity hover:opacity-70">{SITE_TITLE}</a>
 		</h2>
-		<div class="flex gap-6 text-sm">
+		<div class="flex items-center gap-4 sm:gap-6 text-sm">
 			<HeaderLink href="/">Home</HeaderLink>
 			<HeaderLink href="/blog">Blog</HeaderLink>
 			<HeaderLink href="/about">About</HeaderLink>
+			<Search client:load />
 		</div>
 	</nav>
 </header>
