@@ -1,70 +1,222 @@
-import { ActivityCalendar } from 'react-activity-calendar';
-import { motion } from 'framer-motion';
-import 'react-activity-calendar/tooltips.css';
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Props {
-  data: Array<{
-    date: string;
-    count: number;
-    level: number;
-  }>;
+  postsByDate: Record<string, Array<{ title: string; slug: string }>>;
 }
 
-const Calendar = ({ data }: Props) => {
-  // 计算总文章数
-  const totalPosts = data.reduce((acc, curr) => acc + curr.count, 0);
+const Calendar = ({ postsByDate }: Props) => {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [direction, setDirection] = useState(0); // -1 for prev, 1 for next
 
-  // Apple-style monochrome theme
-  // Clean, minimal, high-contrast
-  const appleTheme = {
-    light: ['#f5f5f7', '#d1d1d6', '#aeaeb2', '#8e8e93', '#1c1c1e'], // San Francisco Grays
-    dark: ['#1c1c1e', '#3a3a3c', '#636366', '#8e8e93', '#f5f5f7'],
+  // Reset to today
+  const goToToday = () => {
+    const now = new Date();
+    setDirection(now > currentDate ? 1 : -1);
+    setCurrentDate(now);
+  };
+
+  const prevMonth = useCallback(() => {
+    setDirection(-1);
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(prev.getMonth() - 1);
+      return newDate;
+    });
+  }, []);
+
+  const nextMonth = useCallback(() => {
+    setDirection(1);
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(prev.getMonth() + 1);
+      return newDate;
+    });
+  }, []);
+
+  // Handle wheel scroll with throttling
+  const [isScrolling, setIsScrolling] = useState(false);
+  
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault(); // Prevent page scroll when hovering calendar
+    
+    if (isScrolling) return;
+
+    if (Math.abs(e.deltaY) > 30) {
+      setIsScrolling(true);
+      if (e.deltaY > 0) {
+        nextMonth();
+      } else {
+        prevMonth();
+      }
+      
+      // Reset scrolling lock after animation duration
+      setTimeout(() => {
+        setIsScrolling(false);
+      }, 500);
+    }
+  }, [isScrolling, nextMonth, prevMonth]);
+
+  // Attach wheel listener to a ref container
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Use non-passive listener to be able to preventDefault
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, [handleWheel]);
+
+  // Calendar logic
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth(); // 0-11
+  
+  const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 (Sun) - 6 (Sat)
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  
+  // Prepare grid cells
+  const days = [];
+  // Empty cells for days before the 1st
+  for (let i = 0; i < firstDayOfMonth; i++) {
+    days.push(null);
+  }
+  // Days of the month
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(i);
+  }
+
+  const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+  // Check if a day is today
+  const isToday = (d: number) => {
+    const today = new Date();
+    return d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+  };
+
+  // Get posts for a specific day
+  const getPostsForDay = (d: number) => {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    return postsByDate[dateStr] || [];
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} // Apple-like spring easing
-      className="w-full max-w-5xl mx-auto bg-white/60 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/20 p-8 sm:p-10"
+    <div 
+      ref={containerRef}
+      className="w-full bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden select-none"
     >
-      <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-10 gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Activity</h2>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-5xl font-bold tracking-tighter text-gray-900">{totalPosts}</span>
-            <span className="text-lg font-medium text-gray-500">contributions in the last year</span>
-          </div>
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 className="text-2xl font-bold text-gray-900">
+          {year}年{month + 1}月
+        </h2>
+        
+        <div className="flex items-center gap-2">
+            <button 
+                onClick={prevMonth}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600"
+                aria-label="Previous month"
+            >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <button 
+                onClick={goToToday}
+                className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-sm font-medium text-gray-700 rounded-lg transition-colors"
+            >
+                今天
+            </button>
+            <button 
+                onClick={nextMonth}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-600"
+                aria-label="Next month"
+            >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
         </div>
       </div>
 
-      <div className="flex justify-center sm:justify-start w-full overflow-x-auto pb-4 scrollbar-hide">
-        <ActivityCalendar
-          data={data}
-          theme={appleTheme}
-          blockRadius={3} // Squircle-ish
-          blockSize={14}
-          blockMargin={5}
-          fontSize={13}
-          showWeekdayLabels={true}
-          style={{ fontFamily: 'inherit' }}
-          labels={{
-            legend: {
-              less: 'Less',
-              more: 'More',
-            },
-            months: [
-              'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-            ],
-            totalCount: '{{count}} posts in {{year}}',
-            weekdays: [
-              'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'
-            ]
-          }}
-        />
+      {/* Weekdays Header */}
+      <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
+        {weekDays.map(day => (
+          <div key={day} className="py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+            {day}
+          </div>
+        ))}
       </div>
-    </motion.div>
+
+      {/* Days Grid */}
+      <div className="relative overflow-hidden h-[750px]">
+        <AnimatePresence mode="wait" initial={false} custom={direction}>
+            <motion.div
+                key={`${year}-${month}`}
+                custom={direction}
+                initial={{ x: direction * 50, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: direction * -50, opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="grid grid-cols-7 h-full absolute inset-0"
+            >
+                {days.map((day, index) => {
+                    // Empty cell
+                    if (day === null) {
+                        return <div key={`empty-${index}`} className="border-b border-r border-gray-100 bg-gray-50/30" />;
+                    }
+
+                    const posts = getPostsForDay(day);
+                    const today = isToday(day);
+
+                    return (
+                        <div 
+                            key={day} 
+                            className={`
+                                min-h-[100px] p-2 border-b border-r border-gray-100 hover:bg-gray-50 transition-colors relative group
+                                ${today ? 'bg-blue-50/30' : ''}
+                            `}
+                        >
+                            <div className="flex justify-between items-start mb-1">
+                                <span 
+                                    className={`
+                                        text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full
+                                        ${today ? 'bg-red-500 text-white' : 'text-gray-700'}
+                                    `}
+                                >
+                                    {day}
+                                </span>
+                            </div>
+                            
+                            <div className="space-y-1">
+                                {posts.map(post => (
+                                    <a 
+                                        key={post.slug}
+                                        href={`/blog/${post.slug}/`}
+                                        className="block text-xs truncate py-1 px-1.5 rounded hover:bg-blue-100 text-gray-600 hover:text-blue-700 transition-colors"
+                                        title={post.title}
+                                    >
+                                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 mr-1.5 align-middle"></span>
+                                        <span className="align-middle">{post.title}</span>
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })}
+                
+                {/* Fill remaining cells to complete the grid visually if needed */}
+                {Array.from({ length: 42 - days.length }).map((_, i) => (
+                     <div key={`fill-${i}`} className="border-b border-r border-gray-100 bg-gray-50/30" />
+                ))}
+            </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
   );
 };
 
