@@ -6,7 +6,7 @@ import path from 'node:path';
 export const POST: APIRoute = async ({ request }) => {
   try {
     const formData = await request.formData();
-    const file = formData.get('file[]') as File; // Vditor sends file[] by default
+    const file = (formData.get('file') || formData.get('file[]')) as File;
 
     if (!file) {
       return new Response(JSON.stringify({ msg: 'No file found', code: 1 }), { status: 400 });
@@ -14,7 +14,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     const buffer = await file.arrayBuffer();
     const fileName = `${Date.now()}-${file.name}`;
-    const uploadDir = path.resolve(process.cwd(), 'public/uploads');
+    // Change upload directory to src/assets/images/uploads
+    const uploadDir = path.resolve(process.cwd(), 'src/assets/images/uploads');
 
     try {
         await fs.mkdir(uploadDir, { recursive: true });
@@ -26,13 +27,14 @@ export const POST: APIRoute = async ({ request }) => {
     await fs.writeFile(filePath, Buffer.from(buffer));
 
     // Return format expected by Vditor
+    // Use local-images endpoint for preview
     return new Response(JSON.stringify({
       msg: 'Success',
       code: 0,
       data: {
         errFiles: [],
         succMap: {
-          [file.name]: `/uploads/${fileName}`
+          [file.name]: `/local-images/uploads/${fileName}`
         }
       }
     }), {
@@ -44,6 +46,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   } catch (error) {
     console.error('Error uploading image:', error);
-    return new Response(JSON.stringify({ msg: 'Server Error', code: 1 }), { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return new Response(JSON.stringify({ msg: `Server Error: ${errorMessage}`, code: 1 }), { status: 500 });
   }
 }

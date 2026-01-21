@@ -133,21 +133,6 @@ import Layout from '../layouts/BlogPost.astro';
 						accept: 'image/*',
 						filename: (name) => name.replace(/[^\w.]/g, '_'),
 						fieldName: 'file',
-						format: (files, responseText) => {
-							const res = JSON.parse(responseText);
-							const name = files[0].name;
-							const url = res.url;
-							return JSON.stringify({
-								msg: '',
-								code: 0,
-								data: {
-									errFiles: [],
-									succMap: {
-										[name]: url
-									}
-								}
-							});
-						},
 						error: (msg) => {
 							alert('Upload failed: ' + msg);
 						}
