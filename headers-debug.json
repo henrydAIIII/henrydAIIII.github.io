@@ -1,0 +1,11 @@
+{
+  "method": "POST",
+  "contentType": "multipart/form-data; boundary=------------------------yoLZTvWwKTrh3PNndpxe4D",
+  "allHeaders": {
+    "accept": "*/*",
+    "content-length": "953",
+    "content-type": "multipart/form-data; boundary=------------------------yoLZTvWwKTrh3PNndpxe4D",
+    "host": "localhost:4323",
+    "user-agent": "curl/8.7.1"
+  }
+}
