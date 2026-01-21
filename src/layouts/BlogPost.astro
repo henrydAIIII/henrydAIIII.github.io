@@ -54,13 +54,13 @@ const { title, description, pubDate, updatedDate, heroImage, tags, location } = 
 				</div>
 
 				{heroImage && (
-                    <div class="mb-12 overflow-hidden rounded-2xl shadow-lg aspect-[16/9]">
+                    <div class="mb-12 mx-auto w-fit overflow-hidden rounded-2xl shadow-lg border border-gray-100">
                         <Image 
                             width={1020} 
                             height={510} 
                             src={heroImage} 
                             alt="" 
-                            class="w-full h-full object-cover transform transition-transform duration-700 hover:scale-105"
+                            class="block max-h-[500px] w-auto max-w-full object-cover transform transition-transform duration-700 hover:scale-105"
                         />
                     </div>
                 )}
