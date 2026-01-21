@@ -4,6 +4,7 @@ description: 'Astro 5.0 brings exciting new features like the Astro Content Laye
 pubDate: '2026-01-21'
 heroImage: '../../assets/images/astro-50/content-layer-architecture.D58x9rAj_1eUG2s.webp'
 tags: ["imported"]
+location: "San Francisco, CA"
 ---
 
 **Introducing Astro 5.0!** With Astro Content Layer to load your content from any source, and Server Islands to combine cached, static content with dynamic, personalized content. Read on to learn more about these powerful new features and more!

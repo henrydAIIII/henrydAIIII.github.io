@@ -8,7 +8,7 @@ import { Image } from 'astro:assets';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage, tags } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, tags, location } = Astro.props;
 ---
 
 <html lang="en" class="scroll-smooth">
@@ -30,6 +30,15 @@ const { title, description, pubDate, updatedDate, heroImage, tags } = Astro.prop
 								</div>
 							)
 						}
+                        {location && (
+                            <div class="mt-2 flex items-center justify-center gap-1 text-gray-500 normal-case">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                    <circle cx="12" cy="10" r="3"></circle>
+                                </svg>
+                                <span>{location}</span>
+                            </div>
+                        )}
 					</div>
 					<h1 class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl mb-6 leading-tight">{title}</h1>
                     
