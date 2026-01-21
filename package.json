@@ -26,7 +26,8 @@
     "react-dom": "^19.2.3",
     "sharp": "^0.34.3",
     "tailwind-merge": "^3.4.0",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "vditor": "^3.11.2"
   },
   "devDependencies": {
     "@mozilla/readability": "^0.6.0",
